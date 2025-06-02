@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Прогноз погоды</title>
+  <style>
+    :root {
+      --bg-color: #f0f4f8;
+      --card-bg: #ffffff;
+      --primary-color: #0077cc;
+      --text-color: #333;
+      --border-radius: 10px;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      margin: 40px;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    h1 {
+      color: var(--primary-color);
+      margin-bottom: 30px;
+    }
+
+form {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+    input[type="text"] {
+      padding: 10px 12px;
+      width: 300px;
+      border-radius: var(--border-radius);
+      border: 1px solid #ccc;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--primary-color);
+    }
+
+    input[type="submit"] {
+      background-color: var(--primary-color);
+      color: #fff;
+      padding: 10px 18px;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #005fa3;
+    }
+
+.autocomplete-items {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: #fff;
+    overflow-y: auto;
+    width: 470px;
+    z-index: 99;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-top: 5px;
+}
+
+    .autocomplete-item {
+      padding: 10px;
+      cursor: pointer;
+    }
+
+    .autocomplete-item:hover {
+      background-color: #f0f0f0;
+    }
+
+    .error {
+      color: red;
+      margin-bottom: 15px;
+    }
+
+    .weather {
+        padding: 20px;
+        border-radius: var(--border-radius);
+        max-width: 1200px;
+        margin: 0 auto; /* центрирует по горизонтали */
+    }
+
+    .weather h2 {
+      margin-top: -50px;
+      text-align: center;
+      color: var(--primary-color);
+    }
+
+    .weather ul {
+        display: flex;
+        /* overflow-x: auto; */
+        padding: 0;
+        /* gap: 10px; */
+        list-style: none;
+        /* margin: 0; */
+        white-space: nowrap;
+        scroll-snap-type: x mandatory;
+    }
+
+    .weather ul li {
+        /* background-color: #f9f9f9; */
+        /* border-radius: 6px; */
+        /* padding: 10px 15px; */
+        /* min-width: 120px; */
+        flex: 0 0 auto;
+        text-align: center;
+        scroll-snap-align: start;
+        /* box-shadow: 0 2px 5px rgba(0,0,0,0.1); */
+    }
+
+    .weather-info {
+        /* display: flex; */
+        gap: 20px;
+        flex-wrap: wrap;
+        /* margin-bottom: 20px; */
+        margin: 175px auto;
+    }
+
+    .weather-info p {
+        /* margin: 0; */
+        flex: 1;
+        min-width: 180px; /* чтобы на узких экранах переходили на новую строку */
+    }
+
+    .clock {
+        position: relative;
+        width: 600px;
+        height: 600px;
+        margin: 40px auto;
+        border-radius: 50%;
+        /* border: 2px dashed #ccc; */
+        list-style: none;
+        /* padding: 0; */
+    }
+
+    .clock li {
+        position: absolute;
+        width: 55px;
+        height: 30px;
+        background: var(--card-bg);
+        /* border-radius: 50%; */
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-size: 10px;
+        /* color: var(--primary-color); */
+        font-weight: bold;
+        transform: translate(-50%, -70%);
+        text-align: center;
+        padding: 0;           /* Убираем лишнее */
+        line-height: 1.1;     /* Компактнее строки */
+        font-size: 11px;
+    }
+
+    .current-time {
+        background-color: #0077cc !important;
+        color: white !important;
+        border-radius: 6px;
+        font-weight: bold;
+        box-shadow: 0 0 10px #0077ccaa;
+        height: 40px !important;
+    }
+
+    .current-time {
+      color: white: !important;
+    }
+
+    .clock-center-title {
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      /* font-size: 20px; */
+      color: var(--primary-color);
+      margin: 0;
+      z-index: 1;
+      pointer-events: none; /* Чтобы не мешал кликам по элементам часов */
+    }
+
+    .centered {
+      max-width: 1200px;
+      margin: 0 auto;
+      text-align: center;
+  }
+
+
+  </style>
+</head>
+<body>
+<div class="centered">
+  <h1>Прогноз погоды</h1>
+
+<form method="post" autocomplete="off" id="weatherForm">
+  <div style="position: relative; width: 311px;">
+    <input
+      type="text"
+      id="cityInput"
+      name="city"
+      placeholder="Введите название города"
+      required
+      value="{{ city or last_city or '' }}"
+      style="width: 290px;"
+    />
+    <div id="autocomplete-list" class="autocomplete-items"></div>
+  </div>
+  <input type="submit" value="Показать прогноз" />
+</form>
+
+  {% if error %}
+    <div class="error">{{ error }}</div>
+  {% endif %}
+</div>
+
+  {% if error %}
+    <div class="error">{{ error }}</div>
+  {% endif %}
+
+  {% if weather %}
+    <div class="weather">
+    <ul class="clock">
+      <h2 class="clock-center-title">Погода в городе <br>{{ city }}</h2>
+        {% for time, temp in zip(weather.hourly.time, weather.hourly.temperature_2m) %}
+        <li>{{ time[11:16] }} <br> <span style="color: {% if temp < 20.0 %} orange {% else %} red {% endif %}; background-color: white; border-radius: 6px; padding: 0px 8px; margin-top: 2px;"> {{ temp }} °C </span></li>
+        {% endfor %}
+        <div class="weather-info">
+            <p><strong>Температура:</strong> {{ weather.current_weather.temperature }} °C</p>
+            <p><strong>Скорость ветра:</strong> {{ weather.current_weather.windspeed }} км/ч</p>
+            <p><strong>Направление ветра:</strong> {{ weather.current_weather.winddirection }}°</p>
+            <hr>
+            <p><strong>Наиболее популярные запросы:</strong></p>
+            {% for response in city_responses[:3] %}
+              <p>{{ response.city }}: {{ response.count }}</p>
+            {% endfor %}
+        </div>
+    </ul>
+    </div>
+  {% endif %}
+
+  <script>
+    const cityInput = document.getElementById("cityInput");
+    const autocompleteList = document.getElementById("autocomplete-list");
+
+    let debounceTimeout;
+    cityInput.addEventListener("input", () => {
+      clearTimeout(debounceTimeout);
+      const query = cityInput.value.trim();
+      if (!query) {
+        autocompleteList.innerHTML = "";
+        return;
+      }
+
+      debounceTimeout = setTimeout(() => {
+        fetch(`/autocomplete?q=${encodeURIComponent(query)}`)
+          .then((resp) => resp.json())
+          .then((data) => {
+            autocompleteList.innerHTML = "";
+            data.forEach((item) => {
+              const div = document.createElement("div");
+              div.classList.add("autocomplete-item");
+              div.textContent = item;
+              div.addEventListener("click", () => {
+                cityInput.value = item.split(",")[0];
+                autocompleteList.innerHTML = "";
+              });
+              autocompleteList.appendChild(div);
+            });
+          });
+      }, 300);
+    });
+
+    document.addEventListener("click", function (e) {
+      if (e.target !== cityInput) {
+        autocompleteList.innerHTML = "";
+      }
+    });
+
+    document.getElementById("weatherForm").addEventListener("submit", () => {
+      document.cookie = `last_city=${encodeURIComponent(cityInput.value)};path=/;max-age=2592000`;
+    });
+  </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const items = document.querySelectorAll(".clock li");
+        const total = items.length;
+        const radius = 270;
+        const centerX = 300;
+        const centerY = 300;
+
+        // currentTimeStr передаем из Flask в шаблон
+        const currentTimeStr = "{{ now }}"; // например "14:00"
+
+        items.forEach((el, i) => {
+            const angle = (i / total) * 2 * Math.PI - Math.PI / 2;
+            const x = centerX + radius * Math.cos(angle);
+            const y = centerY + radius * Math.sin(angle);
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+
+            const text = el.textContent.trim().split('\n')[0].trim();
+
+            const now = text.slice(0, 5);
+
+            const style = document.createElement('style');
+              style.textContent = `
+                  .current-time {
+                  background-color: yellow;
+                  font-weight: bold;
+                  padding: 10px;
+                  border-radius: 8px;
+                }
+              `;
+        document.head.appendChild(style);
+
+            console.log(now)
+            if (now === currentTimeStr) {
+                el.classList.add("current-time");
+                el.innerHTML = "Сейчас <br>" + el.innerHTML;
+                
+            }
+        });
+    });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "app"
+version = "0.1.0"
+description = ""
+authors = ["SivikGosh"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+flask = "^3.1.1"
+requests = "^2.32.3"
+flask-session = "^0.8.0"
+dotenv = "^0.9.9"
+sqlalchemy = "^2.0.41"
+alembic = "^1.16.1"
+psycopg2-binary = "^2.9.10"
+uvicorn = "^0.34.3"
+gunicorn = "^23.0.0"
+pytest = "^8.3.5"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
